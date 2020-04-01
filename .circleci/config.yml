@@ -1,0 +1,61 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install packages
+          command: sudo apt-get update && sudo apt-get install wget zip unzip python2.7 python-pip -y
+
+      - run:
+          name: Install awscli
+          command: |
+            sudo pip install awscli
+            aws configure set default.region us-east-1
+      - run:
+          name: Build Artifact
+          command: |
+            cd BillDue
+            pwd
+            ls -al
+            mvn clean install
+            cd target/
+            ls -al
+            cd ../
+            pwd
+            ls -al
+      - run:
+          name: Artifact jar 
+          command: |
+            echo "current build number is ${CIRCLE_BUILD_NUM}"
+            pwd
+            mkdir -p lambda_codedeploy
+            cd lambda_codedeploy
+            cp ../BillDue/target/BillDue-0.0.1-SNAPSHOT.jar .
+            ls -al
+            pwd
+            cd ..
+            pwd
+            ls -al
+      - run:
+          name: Upload Artifact to S3
+          command: |
+            aws s3 cp --recursive lambda_codedeploy s3://${CODE_DEPLOY_S3_BUCKET}
+      - run:
+          name: Update dueBillSendEmail lambda function
+          command: |
+            echo "Update dueBillSendEmail lambda function"
+            aws lambda update-function-code --function-name  dueBillSendEmail  --s3-bucket ${CODE_DEPLOY_S3_BUCKET} --s3-key BillDue-0.0.1-SNAPSHOT.jar --region ${AWS_REGION}
+workflows:
+  version: 2
+  build_deploy-workflow:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - master       
