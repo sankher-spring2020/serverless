@@ -17,7 +17,7 @@ def billDueMailSender(event, context):
     bills = reset_req["dueBills"]
     body = ''
     for link in bills:
-        body = '\n'.join([body, link])
+        body = '<br>'.join([body, link])
 
     shouldSend = insert_email_to_dynamodb(recipient)
 
