@@ -96,14 +96,14 @@ def insert_email_to_dynamodb(recipient):
     dynamodb = boto3.resource('dynamodb',region_name='us-east-1')
     table = dynamodb.Table(dynamo_table)
     dynamo_row = table.query(
-        KeyConditionExpression=Key('Email').eq(recipient)
+        KeyConditionExpression=Key('EmailID').eq(recipient)
     )
     items = dynamo_row['Items']
 
     if not items:
         response = table.put_item(
         Item={
-            'Email': recipient,
+            'EmailID': recipient,
             'CreationTime' : str(time.time()),
             'ExpirationTime' : str(time.time() + 3600)
             }
@@ -119,7 +119,7 @@ def insert_email_to_dynamodb(recipient):
         else:
             table.update_item(
             Key={
-                'Email' : recipient
+                'EmailID' : recipient
             },
             UpdateExpression="set CreationTime = :c, ExpirationTime = :e",
             ExpressionAttributeValues={
