@@ -31,11 +31,11 @@ def send_email(recipient, domain,body):
 
     dueBillLinks = body
 
-    BODY_TEXT = (
+    body_text = (
                     dueBillLinks + "\r\n"
                 )
 
-    BODY_HTML = """<html>
+    body_html = """<html>
     <head></head>
     <body>
       <h1>Due bills from UserManagement Application</h1>
@@ -47,17 +47,17 @@ def send_email(recipient, domain,body):
     </body>
     </html>
                 """
-    CHARSET = "UTF-8"
-
-    trigger_email(recipient, BODY_HTML, BODY_TEXT, "Due Bills", CHARSET, SENDER)
 
 
+    trigger_email(recipient, body_html, body_text, "Due Bills", SENDER)
 
-def trigger_email(recipient, BODY_HTML, BODY_TEXT, SUBJECT, CHARSET, SENDER):
+
+
+def trigger_email(recipient, BODY_HTML, BODY_TEXT, SUBJECT, SENDER):
 
     AWS_REGION = 'us-east-1'
     print(AWS_REGION)
-
+    CHARSET = "UTF-8"
     client = boto3.client('ses',region_name=AWS_REGION)
 
     try:
