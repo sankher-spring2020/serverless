@@ -9,7 +9,7 @@ def billDueMailSender(event, context):
 
     domain = os.environ.get("DomainName")
 
-    snsMessage = event['Records'][0]['Sns']['Message']
+    snsMessage = event.Records[0].Sns.Message
     print(snsMessage)
     reset_req = json.loads(snsMessage)
     recipient = reset_req["emailId"]
