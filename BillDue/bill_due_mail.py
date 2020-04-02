@@ -14,7 +14,7 @@ def billDueMailSender(event, context):
     reset_req = json.loads(snsMessage)
     recipient = reset_req["emailId"]
     print(recipient)
-    bills = reset_req["bills"]
+    bills = reset_req["dueBills"]
     body = ''
     for link in bills:
         body = '\n'.join([body, link])
