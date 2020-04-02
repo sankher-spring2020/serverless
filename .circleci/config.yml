@@ -1,61 +1,51 @@
 version: 2
 jobs:
   build:
+    branches:
+      only:
+        - master #Only building for master branch pushes
     docker:
-      - image: circleci/openjdk:8-jdk
-
+      - image: circleci/python:3.7.2
     steps:
       - checkout
-
       - run:
           name: Install packages
-          command: sudo apt-get update && sudo apt-get install wget zip unzip python2.7 python-pip -y
-
+          command: sudo apt-get update && sudo apt-get install wget zip unzip -y
       - run:
           name: Install awscli
-          command: |
-            sudo pip install awscli
-            aws configure set default.region us-east-1
+          command: sudo pip install awscli
       - run:
-          name: Build Artifact
-          command: |
-            cd BillDue
-            pwd
-            ls -al
-            mvn clean install
-            cd target/
-            ls -al
-            cd ../
-            pwd
-            ls -al
+          name: Install libs in requirements.txt
+          command: sudo pip install -r BillDue/requirements.txt
       - run:
-          name: Artifact jar 
+          name: Zip Artifact
           command: |
-            echo "current build number is ${CIRCLE_BUILD_NUM}"
+            echo "Current build number is ${CIRCLE_BUILD_NUM}"
             pwd
             mkdir -p lambda_codedeploy
             cd lambda_codedeploy
-            cp ../BillDue/target/BillDue-0.0.1-SNAPSHOT.jar .
+            echo "copy from ../BillDue directory to the lambda_codedeploy"
+            cp ../BillDue/*.* .
+            echo "Zipping all files in the lambda_codedeploy directory"
+            zip -r BillDue-lambda.zip .
+            echo "Removing txt and py files"
+            rm *.txt *.py
             ls -al
             pwd
             cd ..
             pwd
             ls -al
       - run:
-          name: Upload Artifact to S3
+          name: Upload Artifact to S3 bucket
           command: |
-            aws s3 cp --recursive lambda_codedeploy s3://${CODE_DEPLOY_S3_BUCKET}
+            echo "Uploading Artifact to S3 bucket ${CODE_DEPLOY_S3_BUCKET}"
+            pwd
+            cd lambda_codedeploy
+            ls -al
+            aws s3 cp BillDue-lambda.zip s3://${CODE_DEPLOY_S3_BUCKET}
+            cd ..
       - run:
           name: Update dueBillSendEmail lambda function
           command: |
             echo "Update dueBillSendEmail lambda function"
-            aws lambda update-function-code --function-name  dueBillSendEmail  --s3-bucket ${CODE_DEPLOY_S3_BUCKET} --s3-key BillDue-0.0.1-SNAPSHOT.jar --region ${AWS_REGION}
-workflows:
-  version: 2
-  build_deploy-workflow:
-    jobs:
-      - build:
-          filters:
-            branches:
-              only:
-                - master       
+            aws lambda update-function-code --function-name  dueBillSendEmail  --s3-bucket ${CODE_DEPLOY_S3_BUCKET} --s3-key BillDue-lambda.zip --region ${AWS_REGION}
